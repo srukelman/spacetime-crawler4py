@@ -4,7 +4,11 @@ from urllib.parse import urlparse, urlunsplit
 from bs4 import BeautifulSoup
 import os
 import json
+import hashlib
 # import nltk
+
+def sha256_hash(text: str) -> str:
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
 def tokenize(input_str: str) -> int:
     # tokenize and count the words in the input
@@ -44,33 +48,38 @@ def tokenize(input_str: str) -> int:
     
     return length
 
-def scraper(url, resp):
-    if resp.status != 200:
-        print('not 200')
-        return [], 0
-    soup = BeautifulSoup(resp.raw_response.content, 'lxml')
-    # remove script and style task
-    for script_and_style in soup(['script', 'style']):
-        script_and_style.decompose()
-    
-    # aggregate the raw text from the page
-    text = soup.get_text(separator=" ", strip=True)
-    # if there are less than 100 words, we deem it as low value
-    if len(text.split()) < 100:
-        print('low text')
-        return [], 0
+def scraper(url, resp, hash_set):
+   
+    if resp.status >= 200 and resp.status < 300:
+        soup = BeautifulSoup(resp.raw_response.content, 'lxml')
+        # remove script and style task
+        for script_and_style in soup(['script', 'style']):
+            script_and_style.decompose()
+        
+        # aggregate the raw text from the page
+        text = soup.get_text(separator=" ", strip=True)
 
-    # if there is a low text to html ratio, we deem it as low value
-    # if len(text) / len(resp.raw_response.content) < 0.1:
-    #    print('low text2')
-    #    return [], 0
-    
-    # skip very large files (over 1 MB)
-    # if len(resp.raw_response.content) > 1000000:
-    #    return [], 0
-    
-    # tokenize and count the text
-    curr_length = tokenize(text)
+        text_hash = sha256_hash(text)
+        if text_hash in hash_set:
+            #print(f'{text_hash} already seen')
+            return [], 0
+        hash_set.add(text_hash)
+        # if there are less than 100 words, we deem it as low value
+        if len(text.split()) < 100:
+            # print('low text')
+            return [], 0
+
+        # if there is a low text to html ratio, we deem it as low value
+        # if len(text) / len(resp.raw_response.content) < 0.1:
+        #    print('low text2')
+        #    return [], 0
+        
+        # skip very large files (over 1 MB)
+        # if len(resp.raw_response.content) > 1000000:
+        #    return [], 0
+        
+        # tokenize and count the text
+        curr_length = tokenize(text)
     
     # curr_subdomain = urlparse(url).netloc
     # print(resp.raw_response.content)
@@ -90,8 +99,6 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    if resp.status != 200:
-        return list()
     
     # get the page content via BeautifulSoup
     soup = BeautifulSoup(resp.raw_response.content, 'lxml')
@@ -105,6 +112,9 @@ def extract_next_links(url, resp):
         if link.has_attr('href') and type(link.get('href')) == str:
             res.add(defragment(link.get('href')))
     return list(res)
+
+def is_calendar_url(url):
+    return re.search(r'(year=\d{4}|month=\w+|/\d{4}[/\-]\d{2}[/\-]\d{2}|date=\d{4}-\d{2}-\d{2})', url)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -126,10 +136,10 @@ def is_valid(url):
         # today.uci.edu/department/information_computer_sciences/*
 
         # check if domain is within one of the four accepted domains
-        if domain.endswith(".ics.uci.edu") or \
-            domain.endswith(".cs.uci.edu") or \
-           domain.endswith(".informatics.uci.edu") or \
-           domain.endswith(".stat.uci.edu"):
+        if domain.endswith("ics.uci.edu") or \
+            domain.endswith("cs.uci.edu") or \
+           domain.endswith("informatics.uci.edu") or \
+           domain.endswith("stat.uci.edu"):
             pass
 
         # check if domain is today.uci.edu and is on the correct path        
