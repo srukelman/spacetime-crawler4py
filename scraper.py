@@ -12,8 +12,9 @@ def tokenize(input_str: str) -> int:
     # curr is a list of characters that are part of the current word (reset to empty when a non-letter is found)
     length = 0
     res = {}
-    if os._exists('tokens.json'):
-        res = json.load(open('tokens.json', 'r'))
+    if os.path.exists('tokens.json'):
+        with open('tokens.json', 'r') as f:
+            res = json.load(f)
     curr = []
     
     for char in input_str:
@@ -38,8 +39,8 @@ def tokenize(input_str: str) -> int:
             res[curr_word] = 1  + res.get(curr_word, 0)
             length += 1
     
-    
-    json.dump(res, open('tokens.json', 'w'))
+    with open('tokens.json', 'w') as f:
+        json.dump(res, f)
     
     return length
 
