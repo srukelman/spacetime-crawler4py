@@ -2,6 +2,7 @@ import heapq
 import json
 def fifty_most_common_words(tokens):
     heap = [(-tokens[token], token) for token in tokens]
+    heapq.heapify(heap)
     res = []
     for _ in range(50):
         curr = heapq.heappop(heap)

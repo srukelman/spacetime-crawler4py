@@ -69,7 +69,8 @@ def scraper(url, resp, hash_set):
 
         text_hash = sha256_hash(text)
         if text_hash in hash_set:
-            #print(f'{text_hash} already seen')
+            print(f'{text_hash} already seen')
+            print(hash_set)
             return [], 0
         hash_set.add(text_hash)
         # if there are less than 100 words, we deem it as low value

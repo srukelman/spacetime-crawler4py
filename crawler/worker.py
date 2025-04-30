@@ -68,7 +68,7 @@ class Worker(Thread):
                 if length > max_page_length:
                     max_page_url = tbd_url
                     max_page_length = length
-                if resp.status == 200 and n != len(self.checksum_set):
+                if resp.status >= 200 and resp.status < 300:
                     subdomain = urlparse(tbd_url).netloc
                     self.subdomains[subdomain] = 1 + self.subdomains.get(subdomain, 0)
                 for scraped_url in scraped_urls:
@@ -78,5 +78,7 @@ class Worker(Thread):
         finally:
             with open(self.subdomains_file, 'w') as f:
                 json.dump(self.subdomains, f)
+            with open(self.checksum_file, 'w') as f:
+                json.dump(list(self.checksum_set), f)
             update_report()
         print(f'Longest Page: {max_page_url} with {max_page_length}')
