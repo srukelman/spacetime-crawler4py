@@ -210,6 +210,9 @@ def is_valid(url):
         if 'calendar' in path or 'events' in path:
             return False
 
+        if url.endswith('.img') or url.endswith('.pdf') or url.endswith('.apk') or url.endswith('.sql'):
+            return False
+
         # filter out URLs that are not scrapable (e.g. images and videos and such)
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
