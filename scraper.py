@@ -16,6 +16,26 @@ word_counter = Counter()
 def sha256_hash(text: str) -> str:
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
+def is_relative_url(url):
+    parsed_url = urlparse(url)
+    if parsed_url.netloc:
+        return False
+    if url.startswith('/'):
+        return True
+    return True
+
+def resolve_links(base_url, links):
+    absolute_links = []
+    for link in links:
+        if '.' in link and '/' not in link and not link.startswith('http') and link.endswith('edu'):
+            link = 'https://' + link
+            
+        if is_relative_url(link):
+            absolute_links.append(urljoin(base_url, link))
+        else:
+            absolute_links.append(link)
+    return absolute_links
+
 def tokenize(input_str: str) -> int:
     # tokenize and count the words in the input
     # res is a dictionary with the words as keys and the number of times they appear in the input as values
@@ -138,11 +158,11 @@ def extract_next_links(url, resp):
     links = soup.find_all('a')
     # print(f'{len(links)} links')
     res = set()
-    links = [get_absolute_url(link) for link in links] # makes all relative links into absolute links
     for link in links:
         # add the link to the list if it is a valid link
         if link.has_attr('href') and type(link.get('href')) == str:
             res.add(defragment(link.get('href')))
+    res = set(resolve_links(url, res))
     return list(res)
 
 def is_calendar_url(url):
