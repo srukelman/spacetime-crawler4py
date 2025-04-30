@@ -25,22 +25,13 @@ class Worker(Thread):
         self.page_count_file = "page_count-test.json"
         self.checksum_set = set()
         self.checksum_file = "checksum-test.json"
-        if not os._exists(self.subdomains_file):
-            with open(self.subdomains_file, 'w') as f:
-                json.dump({}, f)
-        else:
+        if os.path.exists(self.subdomains_file):
             with open(self.subdomains_file, 'r') as f:
                 self.subdomains = json.load(f)
-        if not os.path.exists(self.page_count_file):
-            with open(self.page_count_file, 'w') as f:
-                json.dump(0, f)
-        else:
+        if os.path.exists(self.page_count_file):
             with open(self.page_count_file, 'r') as f:
                 self.page_count = json.load(f)
-        if not os.path.exists(self.checksum_file):
-            with open(self.checksum_file, 'w') as f:
-                json.dump(list(), f)
-        else:
+        if os.path.exists(self.checksum_file):
             with open(self.checksum_file, 'r') as f:
                 self.checksum_set = set(json.load(f))
         super().__init__(daemon=True)
@@ -68,17 +59,18 @@ class Worker(Thread):
                 if length > max_page_length:
                     max_page_url = tbd_url
                     max_page_length = length
-                if resp.status >= 200 and resp.status < 300:
+                if resp.status >= 200 and resp.status < 300 and n != len(self.checksum_set):
                     subdomain = urlparse(tbd_url).netloc
                     self.subdomains[subdomain] = 1 + self.subdomains.get(subdomain, 0)
+                    with open(self.subdomains_file, 'w') as f:
+                        json.dump(self.subdomains, f)
+                    with open(self.checksum_file, 'w') as f:
+                        json.dump(list(self.checksum_set), f)
                 for scraped_url in scraped_urls:
                     self.frontier.add_url(scraped_url)
                 self.frontier.mark_url_complete(tbd_url)
                 time.sleep(self.config.time_delay)
         finally:
-            with open(self.subdomains_file, 'w') as f:
-                json.dump(self.subdomains, f)
-            with open(self.checksum_file, 'w') as f:
-                json.dump(list(self.checksum_set), f)
+            
             update_report()
         print(f'Longest Page: {max_page_url} with {max_page_length}')

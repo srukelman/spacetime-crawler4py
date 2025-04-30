@@ -68,8 +68,10 @@ def scraper(url, resp, hash_set):
         text = soup.get_text(separator=" ", strip=True)
 
         text_hash = sha256_hash(text)
+        FAIL = '\033[91m'
+        ENDC = '\033[0m'
         if text_hash in hash_set:
-            print(f'{text_hash} already seen')
+            print(f'{FAIL}{text_hash} already seen{ENDC}')
             print(hash_set)
             return [], 0
         hash_set.add(text_hash)
@@ -103,9 +105,9 @@ def scraper(url, resp, hash_set):
     # curr_subdomain = urlparse(url).netloc
     # print(resp.raw_response.content)
     links = extract_next_links(url, resp)
-    print(f'{len(links)} extracted')
+    # print(f'{len(links)} extracted')
     res = [link for link in links if is_valid(link)]
-    print(f'{len(res)} valid')
+    # print(f'{len(res)} valid')
     return (res, curr_length)
 
 def process_url(url):
@@ -134,7 +136,7 @@ def extract_next_links(url, resp):
     soup = BeautifulSoup(resp.raw_response.content, 'lxml')
     # extract the links from the page content
     links = soup.find_all('a')
-    print(f'{len(links)} links')
+    # print(f'{len(links)} links')
     res = set()
     links = [get_absolute_url(link) for link in links] # makes all relative links into absolute links
     for link in links:
@@ -159,7 +161,7 @@ def is_valid(url):
         path = parsed.path.lower()    
         # get rid of pages that are not on the web (i.e. not http or https)
         if parsed.scheme not in set(["http", "https"]):
-            print(f'{url} scheme failing')
+            # print(f'{url} scheme failing')
             return False
         
         # *.ics.uci.edu/*
