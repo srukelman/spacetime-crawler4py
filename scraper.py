@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, urlunsplit
+from urllib.parse import urlparse, urlunsplit, urljoin
 # import lxml
 from bs4 import BeautifulSoup
 import os
@@ -136,7 +136,7 @@ def extract_next_links(url, resp):
     links = soup.find_all('a')
     print(f'{len(links)} links')
     res = set()
-    # parse through links found on page
+    links = [get_absolute_url(link) for link in links] # makes all relative links into absolute links
     for link in links:
         # add the link to the list if it is a valid link
         if link.has_attr('href') and type(link.get('href')) == str:
@@ -145,6 +145,9 @@ def extract_next_links(url, resp):
 
 def is_calendar_url(url):
     return re.search(r'(year=\d{4}|month=\w+|/\d{4}[/\-]\d{2}[/\-]\d{2}|date=\d{4}-\d{2}-\d{2})', url)
+
+def get_absolute_url(tbd_url, url):
+    return urljoin(tbd_url, url)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -334,5 +337,81 @@ stop_words = {
     "other",
     "ought",
     "our",
-    "ours"
+    "ours",
+    "ourselves",
+    "out",
+    "over",
+    "own",
+    "same",
+    "shan't",
+    "she",
+    "she'd",
+    "she'll",
+    "she's",
+    "should",
+    "shouldn't",
+    "so",
+    "some",
+    "such",
+    "than",
+    "that",
+    "that's",
+    "the",
+    "their",
+    "theirs",
+    "them",
+    "themselves",
+    "then",
+    "there",
+    "there's",
+    "these",
+    "they",
+    "they'd",
+    "they'll",
+    "they're",
+    "they've",
+    "this",
+    "those",
+    "through",
+    "to",
+    "too",
+    "under",
+    "until",
+    "up",
+    "very",
+    "was",
+    "wasn't",
+    "we",
+    "we'd",
+    "we'll",
+    "we're",
+    "we've",
+    "were",
+    "weren't",
+    "what",
+    "what's",
+    "when",
+    "when's",
+    "where",
+    "where's",
+    "which",
+    "while",
+    "who",
+    "who's",
+    "whom",
+    "why",
+    "why's",
+    "with",
+    "won't",
+    "would",
+    "wouldn't",
+    "you",
+    "you'd",
+    "you'll",
+    "you're",
+    "you've",
+    "your",
+    "yours",
+    "yourself",
+    "yourselves"
 }
