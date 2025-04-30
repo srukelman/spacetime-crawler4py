@@ -77,5 +77,5 @@ class Worker(Thread):
             with open(self.subdomains_file, 'w') as f:
                 json.dump(self.subdomains, f)
             with open(self.checksum_file, 'w') as f:
-                json.dump(list(self.checksum_set))
+                json.dump(list(self.checksum_set), f)
         print(f'Longest Page: {max_page_url} with {max_page_length}')
