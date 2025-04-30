@@ -77,58 +77,60 @@ def tokenize(input_str: str) -> int:
     return length
 
 def scraper(url, resp, hash_set):
-   
-    if resp.status >= 200 and resp.status < 300:
-        soup = BeautifulSoup(resp.raw_response.content, 'lxml')
-        # remove script and style task
-        for script_and_style in soup(['script', 'style']):
-            script_and_style.decompose()
-        
-        # aggregate the raw text from the page
-        text = soup.get_text(separator=" ", strip=True)
+    try:
+        if resp.status >= 200 and resp.status < 300:
+            soup = BeautifulSoup(resp.raw_response.content, 'lxml')
+            # remove script and style task
+            for script_and_style in soup(['script', 'style']):
+                script_and_style.decompose()
+            
+            # aggregate the raw text from the page
+            text = soup.get_text(separator=" ", strip=True)
 
-        text_hash = sha256_hash(text)
-        FAIL = '\033[91m'
-        ENDC = '\033[0m'
-        if text_hash in hash_set:
-            print(f'{FAIL}{text_hash} already seen{ENDC}')
-            print(hash_set)
-            return [], 0
-        hash_set.add(text_hash)
-        # if there are less than 100 words, we deem it as low value
-        if len(text.split()) < 100:
-            # print('low text')
-            return [], 0
+            text_hash = sha256_hash(text)
+            FAIL = '\033[91m'
+            ENDC = '\033[0m'
+            if text_hash in hash_set:
+                print(f'{FAIL}{text_hash} already seen{ENDC}')
+                print(hash_set)
+                return [], 0
+            hash_set.add(text_hash)
+            # if there are less than 100 words, we deem it as low value
+            if len(text.split()) < 100:
+                # print('low text')
+                return [], 0
 
-        # if there is a low text to html ratio, we deem it as low value
-        # if len(text) / len(resp.raw_response.content) < 0.1:
-        #    print('low text2')
-        #    return [], 0
-        
-        # skip very large files (over 1 MB)
-        # if len(resp.raw_response.content) > 1000000:
-        #    return [], 0
+            # if there is a low text to html ratio, we deem it as low value
+            # if len(text) / len(resp.raw_response.content) < 0.1:
+            #    print('low text2')
+            #    return [], 0
+            
+            # skip very large files (over 1 MB)
+            # if len(resp.raw_response.content) > 1000000:
+            #    return [], 0
 
-        #update unique pages and subdomains for report
-        process_url(url)
-        
-        # tokenize and count the text
-        curr_length = tokenize(text)
-        
-        #keep track of each page's length to get max later
-        page_length[defragment(url)] = curr_length
+            #update unique pages and subdomains for report
+            process_url(url)
+            
+            # tokenize and count the text
+            curr_length = tokenize(text)
+            
+            #keep track of each page's length to get max later
+            page_length[defragment(url)] = curr_length
 
-        #update report info every 30 unique pages
-        if len(unique_pages) % 30 == 0:
-            update_report()
-    
-    # curr_subdomain = urlparse(url).netloc
-    # print(resp.raw_response.content)
-    links = extract_next_links(url, resp)
-    # print(f'{len(links)} extracted')
-    res = [link for link in links if is_valid(link)]
-    # print(f'{len(res)} valid')
-    return (res, curr_length)
+            #update report info every 30 unique pages
+            if len(unique_pages) % 30 == 0:
+                update_report()
+        
+        # curr_subdomain = urlparse(url).netloc
+        # print(resp.raw_response.content)
+        links = extract_next_links(url, resp)
+        # print(f'{len(links)} extracted')
+        res = [link for link in links if is_valid(link)]
+        # print(f'{len(res)} valid')
+        return (res, curr_length)
+    except:
+        return [], 0
 
 def process_url(url):
     #update unique pages
