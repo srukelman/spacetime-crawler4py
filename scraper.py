@@ -6,6 +6,12 @@ import os
 import json
 import hashlib
 # import nltk
+from collections import defaultdict, Counter
+
+unique_pages = set()
+subdomains = defaultdict(int)
+page_length = {}
+word_counter = Counter()
 
 def sha256_hash(text: str) -> str:
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
@@ -34,6 +40,7 @@ def tokenize(input_str: str) -> int:
                 curr = []
                 continue
             res[curr_word] = 1 + res.get(curr_word, 0)
+            word_counter[curr_word] += 1
             length += 1
             curr = []
             
@@ -41,6 +48,7 @@ def tokenize(input_str: str) -> int:
         curr_word = ''.join(curr)
         if curr_word not in stop_words:
             res[curr_word] = 1  + res.get(curr_word, 0)
+            word_counter[curr_word] += 1
             length += 1
     
     with open('tokens.json', 'w') as f:
@@ -77,9 +85,19 @@ def scraper(url, resp, hash_set):
         # skip very large files (over 1 MB)
         # if len(resp.raw_response.content) > 1000000:
         #    return [], 0
+
+        #update unique pages and subdomains for report
+        process_url(url)
         
         # tokenize and count the text
         curr_length = tokenize(text)
+        
+        #keep track of each page's length to get max later
+        page_length[defragment(url)] = curr_length
+
+        #update report info every 30 unique pages
+        if len(unique_pages) % 30 == 0:
+            update_report()
     
     # curr_subdomain = urlparse(url).netloc
     # print(resp.raw_response.content)
@@ -88,6 +106,17 @@ def scraper(url, resp, hash_set):
     res = [link for link in links if is_valid(link)]
     print(f'{len(res)} valid')
     return (res, curr_length)
+
+def process_url(url):
+    #update unique pages
+    defrag_url = defragment(url)
+    unique_pages.add(defrag_url)
+    #check for and update subdomains
+    parsed = urlparse(defrag_url)
+    domain = parsed.netloc.lower()
+    if 'uci.edu' in domain:
+        subdomains[domain] += 1
+
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -149,8 +178,8 @@ def is_valid(url):
             print(f'{domain} failing domain check')
             return False
         
-        # skip all calendar trips
-        if 'calendar' in path:
+        # skip potential calendar traps
+        if 'calendar' in path or 'events' in path:
             return False
 
         # filter out URLs that are not scrapable (e.g. images and videos and such)
@@ -176,6 +205,35 @@ def defragment(url):
     if len(url) > 1:
         url.pop()
     return url[0]
+
+def update_report():
+    # Stores updated report info (unique pages, longest page, subdomains, most common words)
+    # Should be called every 30 unique pages and at program exit
+    stats = { 'num_unique_pages': len(unique_pages) }
+
+    if page_length:
+        longest_url = max(page_length, key=page_length.get)
+        stats['longest_page'] = {'url': longest_url, 'length': page_length[longest_url]}
+    
+    subdomain_list = []
+    if subdomains:
+        for domain, count in sorted(subdomains.items()):
+            subdomain_list.append(f"{domain}, {count}")
+    stats['subdomain_list'] = subdomain_list
+
+    #if os.path.exists('tokens.json'):
+     #   with open('tokens.json', 'r') as f:
+      #      try:
+       #         tokens_dict = json.load(f)
+        #        word_counter = Counter(tokens_dict)
+         #       stats['most_common_words'] = [word for word, _ in word_counter.most_common(50)]
+          #  except json.JSONDecodeError as e:
+           #     print(f"JSONDecodeError when reading tokens.json")
+            #    stats['most_common_words'] = []
+    stats['most_common_words'] = [word for word, _ in word_counter.most_common(50)]
+    #dump stats into a file
+    with open('report_stats.json', 'w') as f:
+        json.dump(stats, f, indent=0)
     
 stop_words = {
     "a",

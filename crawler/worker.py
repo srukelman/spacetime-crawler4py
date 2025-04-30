@@ -8,6 +8,7 @@ import json
 import os
 import scraper
 import time
+from scraper import update_report
 
 
 class Worker(Thread):
@@ -51,6 +52,7 @@ class Worker(Thread):
             while True:
                 tbd_url = self.frontier.get_tbd_url()
                 if not tbd_url:
+                    update_report()
                     self.logger.info("Frontier is empty. Stopping Crawler.")
                     break
                 resp = download(tbd_url, self.config, self.logger)
@@ -76,4 +78,5 @@ class Worker(Thread):
         finally:
             with open(self.subdomains_file, 'w') as f:
                 json.dump(self.subdomains, f)
+            update_report()
         print(f'Longest Page: {max_page_url} with {max_page_length}')
