@@ -92,7 +92,7 @@ def scraper(url, resp, hash_set):
             ENDC = '\033[0m'
             if text_hash in hash_set:
                 print(f'{FAIL}{text_hash} already seen{ENDC}')
-                print(hash_set)
+                # print(hash_set)
                 return [], 0
             hash_set.add(text_hash)
             # if there are less than 100 words, we deem it as low value
@@ -203,7 +203,7 @@ def is_valid(url):
         elif domain == "today.uci.edu" and path.startswith("/department/information_computer_sciences/"):
             pass
         else:
-            print(f'{domain} failing domain check')
+            # print(f'{domain} failing domain check')
             return False
         
         # skip potential calendar traps

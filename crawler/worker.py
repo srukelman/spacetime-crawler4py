@@ -71,6 +71,5 @@ class Worker(Thread):
                 self.frontier.mark_url_complete(tbd_url)
                 time.sleep(self.config.time_delay)
         finally:
-            
             update_report()
         print(f'Longest Page: {max_page_url} with {max_page_length}')
