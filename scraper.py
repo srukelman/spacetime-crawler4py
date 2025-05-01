@@ -265,7 +265,7 @@ def update_report():
     #dump stats into a file
     with open('report_stats.json', 'w') as f:
         json.dump(stats, f, indent=0)
-    
+update_report()
 stop_words = {
     "a",
     "about",
