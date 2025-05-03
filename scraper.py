@@ -42,9 +42,16 @@ def tokenize(input_str: str) -> int:
     # curr is a list of characters that are part of the current word (reset to empty when a non-letter is found)
     length = 0
     res = {}
-    if os.path.exists('tokens.json'):
-        with open('tokens.json', 'r') as f:
-            res = json.load(f)
+    
+    # Try to read existing tokens if file exists
+    try:
+        if os.path.exists('tokens.json'):
+            with open('tokens.json', 'r') as f:
+                res = json.load(f)
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"Error reading tokens.json: {e}")
+        res = {}
+    
     curr = []
     
     for char in input_str:
@@ -71,8 +78,11 @@ def tokenize(input_str: str) -> int:
             word_counter[curr_word] += 1
             length += 1
     
-    with open('tokens.json', 'w') as f:
-        json.dump(res, f)
+    try:
+        with open('tokens.json', 'w') as f:
+            json.dump(res, f, indent=2)
+    except IOError as e:
+        print(f"Error writing to tokens.json: {e}")
     
     return length
 
