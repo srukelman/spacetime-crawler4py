@@ -95,8 +95,8 @@ def scraper(url, resp, hash_set):
                 # print(hash_set)
                 return [], 0
             hash_set.add(text_hash)
-            # if there are less than 100 words, we deem it as low value
-            if len(text.split()) < 100:
+            # if there are less than 32 words, we deem it as low value
+            if len(text.split()) < 32:
                 # print('low text')
                 return [], 0
 
@@ -106,8 +106,8 @@ def scraper(url, resp, hash_set):
             #    return [], 0
             
             # skip very large files (over 1 MB)
-            # if len(resp.raw_response.content) > 1000000:
-            #    return [], 0
+            if len(resp.raw_response.content) > 1000000:
+               return [], 0
 
             #update unique pages and subdomains for report
             process_url(url)

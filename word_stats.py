@@ -28,9 +28,9 @@ def subdomain_stats(subdomains):
             f.write(f'{subdomain}, {count}\n')
 
 def main():
-    tokens = json.load(open('tokens.json'))
+    # tokens = json.load(open('tokens.json'))
     subdomains = json.load(open('subdomains-test.json'))
-    fifty_most_common_words(tokens)
+    # fifty_most_common_words(tokens)
     subdomain_stats(subdomains)
 
 
