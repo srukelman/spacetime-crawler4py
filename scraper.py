@@ -255,11 +255,13 @@ def tokenize(input_str: str) -> int:
             word_counter[curr_word] += 1
             length += 1
     
-    try:
-        with open('tokens.json', 'w') as f:
-            json.dump(res, f, indent=2)
-    except IOError as e:
-        print(f"Error writing to tokens.json: {e}")
+    # only write if more than 32 tokens
+    if length > 32:
+        try:
+            with open('tokens.json', 'w') as f:
+                json.dump(res, f, indent=2)
+        except IOError as e:
+            print(f"Error writing to tokens.json: {e}")
     
     return length
 
@@ -273,6 +275,14 @@ def scraper(url, resp, hash_set):
             
             # aggregate the raw text from the page
             text = soup.get_text(separator=" ", strip=True)
+            
+            # tokenize and count the text
+            curr_length = tokenize(text)
+            
+            # if there are less than 32 tokens, we deem it as low value
+            if curr_length < 32:
+                # print('low text')
+                return [], 0
 
             text_hash = sha256_hash(text)
             FAIL = '\033[91m'
@@ -282,10 +292,7 @@ def scraper(url, resp, hash_set):
                 # print(hash_set)
                 return [], 0
             hash_set.add(text_hash)
-            # if there are less than 32 words, we deem it as low value
-            if len(text.split()) < 32:
-                # print('low text')
-                return [], 0
+            
 
             # if there is a low text to html ratio, we deem it as low value
             # if len(text) / len(resp.raw_response.content) < 0.1:
@@ -299,8 +306,7 @@ def scraper(url, resp, hash_set):
             #update unique pages and subdomains for report
             process_url(url)
             
-            # tokenize and count the text
-            curr_length = tokenize(text)
+           
             
             #keep track of each page's length to get max later
             page_length[defragment(url)] = curr_length
